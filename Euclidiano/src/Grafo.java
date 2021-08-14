@@ -1,13 +1,15 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Stack;
 
 
 public class Grafo 
 {
-	private HashMap<Integer, Vertice> vertices;
-	private Vertice raizAtual;
+	protected HashMap<Integer, Vertice> vertices;
+	protected Vertice raizAtual;
 	
 	Grafo ()
 	{
@@ -15,16 +17,47 @@ public class Grafo
 		raizAtual = null;
 	}
 	
-	/* Construtor de cópia para funções de análise */
+	/* Construtor de cópia profunda para funções de análise */
 	
 	private Grafo(Grafo g)
 	{
-		vertices = new HashMap<Integer, Vertice>(g.vertices);
-		raizAtual = new Vertice(g.raizAtual);
+		HashMap <Integer, Vertice> temp = new HashMap<Integer, Vertice>();
+		
+		/* Para cada ID nos vértices do grafo a ser copiado, adicionar no grafo cópia. */
+		
+		for (Vertice v : g.vertices.values())
+			temp.put(v.id, new Vertice(v.id));
+		
+		/* Para cada ID nos vértices do grafo a ser copiado,
+		 * devemos iterar nos vizinhos dele para adicioná-los nos
+		 * vizinhos do vértice no grafo cópia.
+		 */
+		
+		for (Vertice v : g.vertices.values())
+		{
+			Vertice atual = temp.get(v.id); // Referência no grafo cópia
+			
+			for (Vertice w : v.vizinhos)
+				atual.vizinhos.add(temp.get(w.id)); // Coloca a referência do vizinho na lista dos vizinhos
+		}
+			
+		this.vertices = temp;
+		
+		if (g.raizAtual != null)
+			this.raizAtual = this.vertices.get(g.raizAtual.id);
+		else
+			this.raizAtual = null;
 	}
 	
 	public void imprimeGrafo()
 	{
+		System.out.println("Dados do grafo\n----------------");
+		if (this.vertices.isEmpty())
+		{
+			System.out.println("Grafo sem vértices.");
+			return;
+		}
+		
 		if (raizAtual == null)
 			System.out.println("Nenhum vértice é uma raiz.\n");
 		
@@ -32,10 +65,15 @@ public class Grafo
 			System.out.println("A raiz atual é: " + raizAtual.id + "\n");
 		
 		if (vertices != null)
+		{
+			System.out.println("----------------");
+			
 			for (Vertice v : vertices.values())
 			{
 				v.imprimeVertice();
 			}
+		}
+			
 	}
 	
 	public void adicionaVertice(int id)
@@ -50,6 +88,8 @@ public class Grafo
 			
 			for (Vertice u : vertices.values())
 				u.reset();
+			
+			raizAtual = null;
 		}
 	}
 	
@@ -59,7 +99,7 @@ public class Grafo
 		
 		if (d == null)
 		{
-			System.out.println("Vértice não existe.");
+			System.out.println("Vértice não existe.\n");
 			return;
 		}
 		
@@ -73,6 +113,8 @@ public class Grafo
 		
 		for (Vertice v: vertices.values())
 			v.reset();
+		
+		raizAtual = null;
 	}
 	
 	public void adicionaAresta(int id1, int id2)
@@ -82,17 +124,23 @@ public class Grafo
 		
 		if (v == null || w == null)
 		{
-			System.out.println("Pelo menos um dos vértices não existe.");
+			System.out.println("Pelo menos um dos vértices não existe.\n");
 			return;
 		}
 		
-		v.adicionaVizinho(w);
-		w.adicionaVizinho(v);
+		if (v == w)
+			v.vizinhos.add(w);
+		
+		else
+		{
+			v.adicionaVizinho(w);
+			w.adicionaVizinho(v);
+		}
 		
 		for (Vertice u : vertices.values())
-		{
 			u.reset();
-		}
+		
+		raizAtual = null;
 	}
 	
 	
@@ -104,31 +152,38 @@ public class Grafo
 		
 		if (v == null|| u == null)
 		{
-			System.out.println("Um dos vértices não existe.");
+			System.out.println("Um dos vértices não existe.\n");
 			return;
 		}
 		
-		v.vizinhos.remove(id2);
-		u.vizinhos.remove(id1);
+		if (v == u) // Laço
+			v.vizinhos.remove(u);
+			
+		else
+		{
+			v.vizinhos.remove(u);
+			u.vizinhos.remove(v);
+		}
 		
 		for (Vertice w : vertices.values())
-		{
 			w.reset();
-		}
+		
+		raizAtual = null;
+			
 	}
 	
 	public void DFS(int id)
 	{
-		for (Vertice v : vertices.values())
-			v.reset();
-		
 		Vertice v = vertices.get(id); // Vértice de partida da busca
 		
 		if (v == null)
 		{
-			System.out.println("Vértice não existe. Impossível realizar busca.");
+			System.out.println("Vértice não existe. Impossível realizar busca.\n");
 			return;
 		}
+		
+		for (Vertice u : vertices.values())
+			u.reset();
 		
 		v.visitado = true; // Marca o vértice
 		
@@ -139,7 +194,7 @@ public class Grafo
 	
 	public void visitadorDFS(Vertice v)
 	{
-		for (Vertice u : v.vizinhos.values()) // Percorre os vizinhos do vértice
+		for (Vertice u : v.vizinhos) // Percorre os vizinhos do vértice
 		{
 			if (u.visitado == false) // Vértice não marcado
 			{
@@ -150,25 +205,43 @@ public class Grafo
 		
 	}
 	
+	/*
+	 * Aqui, vamos considerar que vértices de grau 0 serão ignorados, pois essa função
+	 * está sendo utilizada para encontrar o circuito euleriano, que não se preocupa com vértices de grau 0.
+	 * Logo, um grafo com vértices de grau 0 será considerado conexo se esse não for o grau máximo.
+	 */
+	
 	public boolean verificaConexidade()
 	{
 		if (vertices == null || vertices.isEmpty())
 			return false;
 		
-		int idVerticeInicial;
+		Integer idVerticeInicial = 0;
 		
 		if (raizAtual == null) // Se verdadeiro, não houve busca no grafo.
 		{
+			// Não podemos começar a busca de um vértice de grau 0.
+			// Por isso, devemos iterar até encontrar um vértice de grau diferente de 0.
+			
 			Iterator<Map.Entry<Integer, Vertice>> i = vertices.entrySet().iterator();
-			idVerticeInicial = i.next().getKey(); // Retorna o primeiro vértice da lista.
+			
+			while (i.hasNext())
+			{
+				Vertice v = i.next().getValue();
+				
+				idVerticeInicial = v.id;
+				
+				if (v.retornaGrauVertice() != 0) 
+					break;				
+			}
 		}
 		else
-			idVerticeInicial = raizAtual.id; // Começa da raiz atual.
+			idVerticeInicial = raizAtual.id; // Começa da raiz atual.	
 		
 		DFS(idVerticeInicial);
 		
 		for (Vertice v : vertices.values())
-			if (v.visitado == false)
+			if (v.visitado == false && v.retornaGrauVertice() != 0)
 				return false; // Se o vértice não foi encontrado na busca, o grafo é desconexo.
 		
 		return true;
@@ -192,14 +265,11 @@ public class Grafo
 			if (grauMaximo < v.retornaGrauVertice())
 				grauMaximo = v.retornaGrauVertice();
 			
-			if (v.retornaGrauVertice() == 0)
-				h.deletaVertice(v.id); // Vértices de grau 0 não atrapalham o circuito. Podemos remover.
 		}
 		
 		if (grauMaximo == 0)
 			return false; // Grafo totalmente desconexo.
 		
-		/* Todos os vértices de grau 0 foram removidos. Se houver desconexão, serão componentes de vértices de grau != 0*/
 		if (!h.verificaConexidade()) 
 			return false; // Grafo desconexo
 			
@@ -218,10 +288,11 @@ public class Grafo
 	 * ou obtemos o circuito completo ou ele não possui mais arestas.
 	 * No segundo caso, ainda podem haver arestas no grafo.
 	 * Logo, a implementação de pilha assegura que iremos percorrer todas as arestas,
-	 * pois, sempre haverá um vértice na pilha que conterá arestas, já que o grafo é conexo
-	 * e a cada chegada em um vértice, adicionamo-lo na pilha.
-	 * Como o circuito está implementado como pilha também, o primeiro da pilha é o último a entrar,
-	 * o segundo é o penúltimo e assim por diante. Com isso, será impresso o circuito do começo ao fim.
+	 * pois sempre haverá um vértice na pilha que conterá arestas, já que o grafo é conexo
+	 * e, a cada chegada em um vértice, adicionamo-lo na pilha.
+	 * Como o circuito está implementado como pilha LIFO também, o primeiro da pilha é o último a entrar,
+	 * o segundo é o penúltimo e assim por diante. Com isso, será impresso o circuito na ordem
+	 * que o grafo foi percorrido.
 	 */
 	
 	public void imprimeEuleriano()
@@ -232,9 +303,18 @@ public class Grafo
 		Stack<Vertice> pilhaAuxiliar = new Stack<Vertice>(); // Pilha para percorrer o grafo parcialmente
 		Stack<Vertice> pilhaCircuito = new Stack<Vertice>(); // Pilha contendo o circuito final
 		
-		Iterator<Map.Entry<Integer, Vertice>> i = h.vertices.entrySet().iterator();
+		ArrayList<Vertice> hashParaArray = new ArrayList<Vertice>(h.vertices.values());
+		Random r = new Random();
+		int posicaoAleatoria = r.nextInt(hashParaArray.size());
 		
-		verticeMaisRecente = i.next().getValue(); // Retorna o primeiro vértice da lista para começar.
+		verticeMaisRecente = hashParaArray.get(posicaoAleatoria); // Retorna um vértice da lista para começar.
+		
+		 // Se o vértice tem grau 0, precisamos procurar outro para começar o circuito.		
+		while (verticeMaisRecente.retornaGrauVertice() == 0)
+		{
+			posicaoAleatoria = r.nextInt(hashParaArray.size());
+			verticeMaisRecente = hashParaArray.get(posicaoAleatoria);
+		}
 		
 		pilhaAuxiliar.push(verticeMaisRecente);
 		
@@ -250,9 +330,11 @@ public class Grafo
 			
 			else
 			{
-				Iterator<Map.Entry<Integer, Vertice>> primeiroVizinho = verticeMaisRecente.vizinhos.entrySet().iterator();				
+				hashParaArray = new ArrayList<Vertice>(verticeMaisRecente.vizinhos);
 				
-				Vertice proxVertice = primeiroVizinho.next().getValue(); // Pega o primeiro vizinho adjacente a esse vértice.
+				posicaoAleatoria = r.nextInt(hashParaArray.size());
+				
+				Vertice proxVertice = hashParaArray.get(posicaoAleatoria);// Pega um vizinho adjacente a esse vértice.
 				
 				pilhaAuxiliar.push(proxVertice);
 				h.removeAresta(verticeMaisRecente.id, proxVertice.id);			
@@ -264,6 +346,7 @@ public class Grafo
 			System.out.print(pilhaCircuito.peek().id + " ");
 			pilhaCircuito.pop();
 		}
+		System.out.println("\n");
 		
 		
 	}
