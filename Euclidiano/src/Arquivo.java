@@ -1,6 +1,4 @@
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -57,55 +55,47 @@ public class Arquivo
 		
 		catch(IOException e)
 		{
-			
+			System.out.println("Erro de leitura do arquivo.");
+			return;
 		}		
 	}
 	
 	private void adicionaVizinhos(Grafo g, String buffer, int id)
 	{
 		// Irá ignorar o id seguido de " = "
+		// Se a entrada estiver correta, devemos ter vizinhos = {"", <vizinhos>}
 		
-		ArrayList<String> vizinhos = new ArrayList<String>(Arrays.asList(buffer.split("[0-9]* = ")));
-		
-		for (String s : vizinhos)
+		String[] vizinhos = buffer.split("[0-9]* = ");
+
+		if (vizinhos.length == 0) // Não tem vizinhos
+			return;
+			
+		String[] vertices = vizinhos[1].trim().split(" ");
+			
+		for (String v : vertices)
 		{
-			if (s.isBlank()) // Não tem vizinhos
-				continue;
-			
-			String[] vertices = s.split(" ");
-			
-			for (String v : vertices)
+			int vizinho;
+				
+			try
 			{
-				int vizinho;
-				
-				try
-				{
-					vizinho = Integer.parseInt(v);
-				}
-				
-				catch (NumberFormatException e)
-				{
-					System.out.println("O arquivo contém uma linha que não é do formato id = <vizinhos>");
-					g.vertices.clear();
-					return;
-				}
-				
-				if (!g.vertices.containsKey(vizinho))
-				{
-					g.adicionaVertice(vizinho);
-					g.adicionaAresta(id, vizinho);
-				}
-				
-				else
-				{
-					if (!g.vertices.get(vizinho).vizinhos.contains(g.vertices.get(id)))
-					{
-						g.adicionaAresta(id, vizinho);
-					}
-				}
-					
-			
+				vizinho = Integer.parseInt(v);
 			}
+				
+			catch (NumberFormatException e)
+			{
+				System.out.println("O arquivo contém uma linha que não é do formato id = <vizinhos>");
+				g.vertices.clear();
+				System.exit(255);
+				return;
+			}
+				
+			if (!g.vertices.containsKey(vizinho))
+				g.adicionaVertice(vizinho);
+			
+			g.vertices.get(id).adicionaVizinho(g.vertices.get(vizinho));
+
+			if (vizinho == id)
+				g.vertices.get(id).adicionaVizinho(g.vertices.get(id));	// Um laço é uma aresta, mas contribui em 2 no grau de um vértice.
 		}
 		
 	}

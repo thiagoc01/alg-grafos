@@ -129,7 +129,10 @@ public class Grafo
 		}
 		
 		if (v == w)
+		{
 			v.vizinhos.add(w);
+			v.vizinhos.add(w);
+		}
 		
 		else
 		{
@@ -150,14 +153,17 @@ public class Grafo
 		Vertice v = vertices.get(id1);
 		Vertice u = vertices.get(id2);
 		
-		if (v == null|| u == null)
+		if (v == null || u == null)
 		{
 			System.out.println("Um dos vértices não existe.\n");
 			return;
 		}
 		
 		if (v == u) // Laço
+		{
 			v.vizinhos.remove(u);
+			v.vizinhos.remove(u);
+		}
 			
 		else
 		{

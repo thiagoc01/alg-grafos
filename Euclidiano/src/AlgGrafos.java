@@ -1,3 +1,5 @@
+import java.io.File;
+
 public class AlgGrafos 
 {
 	public static void main(String[] args) 
@@ -6,27 +8,19 @@ public class AlgGrafos
 		
 		Arquivo arq = new Arquivo();
 		
-		arq.leArquivo(grafo, "src\\myfiles\\in.txt");
+		arq.leArquivo(grafo, "myfiles" + File.separator + "grafo01.txt");
 		
 		if (grafo.vertices.isEmpty())
 			return;
 		
-		
-		
-		else
+		if (grafo.eEuleriano())
 		{
-			grafo.imprimeGrafo();
-			if (grafo.eEuleriano())
-			{
-				System.out.println("Um circuito euleriano é: ");
-				grafo.imprimeEuleriano();
-			}
-			grafo.DFS(3);
-			grafo.imprimeGrafo();
+			System.out.println("Um possível circuito euleriano para esse grafo é: ");
+			grafo.imprimeEuleriano();
 		}
-		
-		
 
+		else
+			System.out.println("O grafo de entrada não possui circuito euleriano.");
 	}
 
 }

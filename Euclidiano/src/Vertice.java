@@ -29,12 +29,20 @@ public class Vertice implements Comparator<Vertice>
 			int numArestas = Collections.frequency(vizinhos, v);
 			
 			if (numArestas > 1)
-				System.out.print(" " + v.id + " (" + numArestas + " arestas)");
+			{
+				if (v.id != this.id)
+					System.out.print(" " + v.id + " (" + numArestas + " arestas)");
+				else
+					System.out.print(" " + v.id + " (" + numArestas / 2 + " arestas)");
+			}
 			else
 				System.out.print(" " + v.id);
 		}
 		
 		System.out.println("");
+
+		if (!vizinhos.isEmpty())
+			System.out.println("Vértice de grau " + vizinhos.size());
 		
 		if (visitado == false)
 			System.out.println("\nVértice não descoberto.");
